@@ -64,8 +64,9 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     });
     await exercise.save();
 
-    // user.exercises.push(exercise);
-    //  user = await user.save();
+    user.exercises.push(exercise);
+    user = await user.save();
+    
     const response = {
       _id: user._id,
       username: user.username,
@@ -74,7 +75,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       description: exercise.description,
     };
     
-    console.log('populate', response);
+    // console.log('populate', response);
 
     res.json(response);
        
@@ -82,6 +83,53 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
   
+});
+
+app.get('/api/users/:_id/logs', async (req, res) => {
+  const userId = req.params['_id'];
+
+  const {from, to, limit} = req.query;
+
+  try {
+    const query = {};
+    if (from && to) {
+      query.date = {
+        $gte: new Date(from),
+        $lte: new Date(to),
+      }
+    }
+    let queryLimit = {}
+    if (limit) {
+      queryLimit = { limit: limit } ;
+    }
+
+    const user = await User.findById(userId).populate({
+      path: 'exercises',
+      query,
+      options: queryLimit
+    }).exec();
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const logs = {
+      username: user.username,
+      count: user.exercises.length,
+      _id: user._id,
+      log: user.exercises.map((exercise) => ({
+        description: exercise.description,
+        duration: exercise.duration,
+        date: exercise.date.toDateString(),
+      })),
+    }
+
+    // console.log('logs', logs);
+    res.json(logs);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 
