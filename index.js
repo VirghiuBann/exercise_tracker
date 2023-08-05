@@ -33,7 +33,12 @@ app.post('/api/users', async (req, res) => {
   res.json(newUser);
 });
 
+app.get('/api/users', async (req, res) => {
+  const users = await User.find({});
+  console.log('GET USERS', users);
 
+  res.json(users);
+})
 
 
 const db = mongoose.connection;
