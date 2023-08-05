@@ -9,7 +9,8 @@ const exerciseSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  date: Date
+  date: Date,
+  user_id: String
 });
 
 module.exports = mongoose.model("Exercise", exerciseSchema);

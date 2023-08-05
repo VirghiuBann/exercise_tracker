@@ -29,16 +29,60 @@ app.post('/api/users', async (req, res) => {
   const username = req.body.username;
 
   const newUser = await User.create({ username: username });
-  console.log(newUser);
-  res.json(newUser);
+  
+  res.json({
+    _id: newUser._id,
+    username: newUser.username
+  });
 });
 
 app.get('/api/users', async (req, res) => {
   const users = await User.find({});
-  console.log('GET USERS', users);
+  // console.log('GET USERS', users);
 
   res.json(users);
-})
+});
+
+app.post('/api/users/:_id/exercises', async (req, res) => {
+  const { description, duration, date } = req.body;
+  const userId = req.params['_id'];
+  
+  const dateValidate = !date ? new Date() : new Date(date);
+ 
+  try {
+    let user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not Found!' });
+    }
+ 
+    const exercise = new Exercise({
+      user_id: user._id,
+      description: description,
+      duration: +duration,
+      date: dateValidate
+    });
+    await exercise.save();
+
+    // user.exercises.push(exercise);
+    //  user = await user.save();
+    const response = {
+      _id: user._id,
+      username: user.username,
+      date: new Date(exercise.date).toDateString(),
+      duration: exercise.duration,
+      description: exercise.description,
+    };
+    
+    console.log('populate', response);
+
+    res.json(response);
+       
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+  
+});
 
 
 const db = mongoose.connection;
