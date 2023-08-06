@@ -18,7 +18,7 @@ const Exercise = require('./model/Exercise');
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 app.use(express.static('public'));
 app.get('/', (req, res) => {
@@ -38,16 +38,22 @@ app.post('/api/users', async (req, res) => {
 
 app.get('/api/users', async (req, res) => {
   const users = await User.find({});
-  // console.log('GET USERS', users);
+  
+  const response = users.map((user) => ({
+    _id: user._id,
+    username: user.username
+  }));
 
-  res.json(users);
+  res.json(response);
 });
 
 app.post('/api/users/:_id/exercises', async (req, res) => {
   const { description, duration, date } = req.body;
   const userId = req.params['_id'];
-  
-  const dateValidate = !date ? new Date() : new Date(date);
+  console.log('DATE_INPUT', date);
+  console.log('DATE_PARSED', new Date(date).toDateString());
+  const dateValidate = date ? date : new Date();
+  // const dateValidate = fixDate(date);
  
   try {
     let user = await User.findById(userId);
@@ -56,26 +62,26 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       return res.status(404).json({ message: 'User not Found!' });
     }
  
-    const exercise = new Exercise({
+    const newExercise = new Exercise({
       user_id: user._id,
       description: description,
       duration: +duration,
       date: dateValidate
     });
-    await exercise.save();
+    const exercise = await newExercise.save();
 
     user.exercises.push(exercise);
     user = await user.save();
-    
+    console.log('Exercise:',  new Date(exercise.date).toDateString());
     const response = {
-      _id: user._id,
       username: user.username,
-      date: new Date(exercise.date).toDateString(),
-      duration: exercise.duration,
       description: exercise.description,
+      duration: exercise.duration,
+      date: new Date(exercise.date).toDateString(),
+      _id: user._id,
     };
     
-    // console.log('populate', response);
+    console.log('exercise', response);
 
     res.json(response);
        
@@ -120,7 +126,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       log: user.exercises.map((exercise) => ({
         description: exercise.description,
         duration: exercise.duration,
-        date: exercise.date.toDateString(),
+        date: new Date(exercise.date).toDateString(),
       })),
     }
 

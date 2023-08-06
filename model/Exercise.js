@@ -10,7 +10,6 @@ const exerciseSchema = new mongoose.Schema({
     required: true
   },
   date: Date,
-  user_id: String
 });
 
 module.exports = mongoose.model("Exercise", exerciseSchema);
